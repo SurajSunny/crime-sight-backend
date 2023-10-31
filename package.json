@@ -1,0 +1,19 @@
+{
+  "name": "crimesight-backend",
+  "version": "1.0.0",
+  "description": "crimesight-group-37",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Group37 (Archit Mittal)",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "http": "^0.0.1-security",
+    "node-oracledb": "^1.0.2",
+    "oracledb": "^6.2.0"
+  }
+}
