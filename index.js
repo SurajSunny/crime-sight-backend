@@ -1,43 +1,27 @@
-const http = require('http');
-const oracledb = require('oracledb');
-async function run() {
-  let connection;
+require('dotenv').config()
+const express = require('express')
+const parser = require('body-parser')
+const cors = require('cors')
+const bodyParser = require('body-parser')
+const { executeQuery } = require('./services/execute.js')
+require('./services/execute.js')
+const app = express()
 
-  console.log("Starting the function");
+app.use(bodyParser.json())
+app.use(cors())
 
-  try {
-    console.log("Trying to get a connection");
-    connection = await oracledb.getConnection({
-      user: 'mittalarchit', 
-      password: 'Ba4f9X8FYhkkDv35Lc7QU6N4',
-      connectString: 'oracle.cise.ufl.edu:1521/orcl'
-    });
 
-    console.log('Successfully connected to Oracle Database');
+const server = app.listen(process.env.PORT , function(){
+  const port = server.address().port;
+  console.log("Listening on PORT NUMBER", port);
+})
 
-    // Execute some queries here
-    const result = await connection.execute(
-      `SELECT * FROM WCOUNTRY`,
-    );
 
-    console.log(result);
+app.post("/api/test",  async function(req,res) {
+  const age = req.body;
+  console.log(age)
+const result = await executeQuery('SELECT * FROM WCOUNTRY')
 
-  } catch (err) {
-    console.log("Caught an error");
-    console.error(err);
-  } finally {
-    if (connection) {
-      try {
-        console.log("Closing the connection");
-        await connection.close();
-      } catch (err) {
-        console.log("Error while closing the connection");
-        console.error(err);
-      }
-    }
-  }
-}
+res.send(result)
 
-console.log("Calling the function");
-run();
-console.log("Function called");
+})
