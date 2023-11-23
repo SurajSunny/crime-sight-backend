@@ -19,9 +19,146 @@ const server = app.listen(process.env.PORT , function(){
 
 app.post("/api/test",  async function(req,res) {
   const age = req.body;
-  console.log(age)
-const result = await executeQuery('SELECT * FROM WCOUNTRY')
+const result = await executeQuery('SELECT * FROM crime_report')
 
 res.send(result)
 
 })
+
+// get's the complexQuery1 with codes
+app.get("/api/get_complexQ1",  async function(req,res) {
+const result = await executeQuery(`SELECT Area.area_code,Area.area_name, EXTRACT(YEAR FROM crime_report.date_rprtd) AS year, 
+                                      CASE  WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (12, 1, 2) THEN 'Winter' WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (3, 4, 5) THEN 'Spring'
+                                      WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (6, 7, 8) THEN 'Summer'
+                                      ELSE 'Fall'
+                                      END AS season,
+                                      COUNT(Crime_report.DR_NO) AS crime_count
+                                      FROM
+                                      Crime_report
+                                      JOIN Area ON Crime_report.area_code = Area.area_code
+                                      GROUP BY
+                                      Area.area_code,
+                                      Area.area_name,
+                                      EXTRACT(YEAR FROM crime_report.date_rprtd),
+                                      CASE
+                                      WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (12, 1, 2) THEN 'Winter'
+                                      WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (3, 4, 5) THEN 'Spring'
+                                      WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (6, 7, 8) THEN 'Summer'
+                                      ELSE 'Fall'
+                                      END
+                                      ORDER BY
+                                      Area.area_code,
+                                      EXTRACT(YEAR FROM crime_report.date_rprtd),
+                                      season`)
+
+res.send(result)
+
+})
+
+app.get("/api/get_complexQ2",  async function(req,res) {
+  const result = await executeQuery(`SELECT 
+                                      FLOOR(TIME_OCC / 100) AS Incident_Hour, 
+                                      AREA_CODE, 
+                                      COUNT(*) AS Incident_Count
+                                    FROM 
+                                      Crime_report
+                                    GROUP BY 
+                                      FLOOR(TIME_OCC / 100), 
+                                      AREA_CODE
+                                    ORDER BY 
+                                      AREA_CODE, 
+                                      Incident_Count DESC`)
+                                      
+  res.send(result)
+  
+  })
+
+
+
+  app.get("/api/get_complexQ3",  async function(req,res) {
+    const result = await executeQuery(`SELECT 
+                                        EXTRACT(YEAR FROM DATE_OCC) AS Year,
+                                        CASE 
+                                            WHEN EXTRACT(MONTH FROM DATE_OCC) IN (12, 1, 2) THEN 'Winter'
+                                            WHEN EXTRACT(MONTH FROM DATE_OCC) IN (3, 4, 5) THEN 'Spring'
+                                            WHEN EXTRACT(MONTH FROM DATE_OCC) IN (6, 7, 8) THEN 'Summer'
+                                            WHEN EXTRACT(MONTH FROM DATE_OCC) IN (9, 10, 11) THEN 'Autumn'
+                                        END AS Season,
+                                        CASE 
+                                            WHEN VICT_AGE <= 17 THEN '0-17'
+                                            WHEN VICT_AGE BETWEEN 18 AND 30 THEN '18-30'
+                                            WHEN VICT_AGE BETWEEN 31 AND 45 THEN '31-45'
+                                            WHEN VICT_AGE BETWEEN 46 AND 60 THEN '46-60'
+                                            ELSE '61+'
+                                        END AS Age_Group,
+                                        AREA_CODE,
+                                        COUNT(*) AS Victim_Count
+                                    FROM 
+                                        Crime_report
+                                    GROUP BY 
+                                        EXTRACT(YEAR FROM DATE_OCC),
+                                        CASE 
+                                            WHEN EXTRACT(MONTH FROM DATE_OCC) IN (12, 1, 2) THEN 'Winter'
+                                            WHEN EXTRACT(MONTH FROM DATE_OCC) IN (3, 4, 5) THEN 'Spring'
+                                            WHEN EXTRACT(MONTH FROM DATE_OCC) IN (6, 7, 8) THEN 'Summer'
+                                            WHEN EXTRACT(MONTH FROM DATE_OCC) IN (9, 10, 11) THEN 'Autumn'
+                                        END,
+                                        CASE 
+                                            WHEN VICT_AGE <= 17 THEN '0-17'
+                                            WHEN VICT_AGE BETWEEN 18 AND 30 THEN '18-30'
+                                            WHEN VICT_AGE BETWEEN 31 AND 45 THEN '31-45'
+                                            WHEN VICT_AGE BETWEEN 46 AND 60 THEN '46-60'
+                                            ELSE '61+'
+                                        END,
+                                        AREA_CODE
+                                    ORDER BY 
+                                        Year, Season, Age_Group, AREA_CODE`)
+                                        
+    res.send(result)
+    
+    })
+
+    app.get("/api/get_complexQ4",  async function(req,res) {
+      const result = await executeQuery(`WITH YearlyWeaponCount AS (
+                                                      SELECT 
+                                                          EXTRACT(YEAR FROM DATE_OCC) AS Year,
+                                                          AREA_CODE,
+                                                          WEAPON_USED_CODE,
+                                                          COUNT(*) AS Weapon_Count
+                                                      FROM 
+                                                          Crime_report
+                                                      GROUP BY 
+                                                          EXTRACT(YEAR FROM DATE_OCC), 
+                                                          AREA_CODE, 
+                                                          WEAPON_USED_CODE
+                                                  )
+                                                  SELECT 
+                                                      a.Year,
+                                                      a.AREA_CODE,
+                                                      a.WEAPON_USED_CODE,
+                                                      a.Weapon_Count AS Current_Year_Count,
+                                                      b.Weapon_Count AS Previous_Year_Count,
+                                                      a.Weapon_Count - COALESCE(b.Weapon_Count, 0) AS Year_Over_Year_Change
+                                                  FROM 
+                                                      YearlyWeaponCount a
+                                                  LEFT JOIN 
+                                                      YearlyWeaponCount b ON a.AREA_CODE = b.AREA_CODE 
+                                                      AND a.WEAPON_USED_CODE = b.WEAPON_USED_CODE 
+                                                      AND a.Year = b.Year + 1
+                                                  ORDER BY 
+                                                      a.Year, 
+                                                      a.AREA_CODE, 
+                                                      a.WEAPON_USED_CODE
+                                                        `)
+      
+      res.send(result)
+      
+      })
+
+
+app.get("/api/get_areas",  async function(req,res) {
+  const result = await executeQuery(`SELECT * FROM Area`)
+  
+  res.send(result)
+  
+  })
