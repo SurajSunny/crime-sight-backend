@@ -153,6 +153,40 @@ app.get("/api/get_complexQ3",  async function(req,res) {
       res.send(result)
       })
 
+      // Complex Query 2 : How has the detection rate of theft-related crimes changed in specific districts over time?
+      app.get("/api/get_complexQ2",  async function(req,res) {
+        const result = await executeQuery(`SELECT 
+        area_code,
+        EXTRACT(YEAR FROM DATE_OCC) AS Year,
+        SUM(
+            CASE 
+                WHEN STATUS IN ( 'AA', 'AO', 'JA', 'JO') THEN 1 
+                ELSE 0 
+            END
+        ) AS Detected_Crimes,
+        COUNT(*) AS Total_Crimes,
+        Round((SUM(
+            CASE 
+                WHEN STATUS IN ( 'AA', 'AO', 'JA', 'JO') THEN 1 
+                ELSE 0 
+            END
+        ) / COUNT(*)) * 100,2) AS Detection_Rate_Percentage
+    FROM 
+        Crime_report
+    WHERE 
+        CRIME_CODE IN (SELECT DISTINCT(cr.crime_code) 
+                        FROM crime_report cr JOIN Crime_type ct ON cr.crime_code = ct.crime_code
+                        WHERE LOWER(ct.crime_descr) LIKE '%theft%'
+                        )
+    GROUP BY 
+        area_code, EXTRACT(YEAR FROM DATE_OCC)
+    ORDER BY 
+         area_code, EXTRACT(YEAR FROM DATE_OCC)
+                                                          `)
+        
+        res.send(result)
+        })
+  
 
 app.get("/api/get_areas",  async function(req,res) {
   const result = await executeQuery(`SELECT * FROM Area`)
