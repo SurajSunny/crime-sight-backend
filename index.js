@@ -28,7 +28,8 @@ res.send(result)
 // get's the complexQuery1 with codes
 app.get("/api/get_complexQ1",  async function(req,res) {
 const result = await executeQuery(`SELECT Area.area_code,Area.area_name, EXTRACT(YEAR FROM crime_report.date_rprtd) AS year, 
-                                      CASE  WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (12, 1, 2) THEN 'Winter' WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (3, 4, 5) THEN 'Spring'
+                                      CASE  WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (12, 1, 2) THEN 'Winter' 
+                                      WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (3, 4, 5) THEN 'Spring'
                                       WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (6, 7, 8) THEN 'Summer'
                                       ELSE 'Fall'
                                       END AS season,
@@ -52,7 +53,6 @@ const result = await executeQuery(`SELECT Area.area_code,Area.area_name, EXTRACT
                                       season`)
 
 res.send(result)
-
 })
 
 app.get("/api/get_complexQ2",  async function(req,res) {
@@ -115,7 +115,6 @@ app.get("/api/get_complexQ2",  async function(req,res) {
                                         Year, Season, Age_Group, AREA_CODE`)
                                         
     res.send(result)
-    
     })
 
     app.get("/api/get_complexQ4",  async function(req,res) {
@@ -152,7 +151,6 @@ app.get("/api/get_complexQ2",  async function(req,res) {
                                                         `)
       
       res.send(result)
-      
       })
 
 

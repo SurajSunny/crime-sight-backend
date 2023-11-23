@@ -1,6 +1,6 @@
 const config = {
-    user : 'mittalarchit',
-    password : 'Ba4f9X8FYhkkDv35Lc7QU6N4',
+    user : 'kothiyalakshat',
+    password : 'iV8A9Q8DJWGLBJLiZ3UAIEOO',
     connectString: 'oracle.cise.ufl.edu:1521/orcl'
 }
 
