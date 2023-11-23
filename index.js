@@ -55,7 +55,7 @@ const result = await executeQuery(`SELECT Area.area_code,Area.area_name, EXTRACT
 res.send(result)
 })
 
-app.get("/api/get_complexQ2",  async function(req,res) {
+app.get("/api/get_complexQ3",  async function(req,res) {
   const result = await executeQuery(`SELECT 
                                       FLOOR(TIME_OCC / 100) AS Incident_Hour, 
                                       AREA_CODE, 
@@ -75,7 +75,7 @@ app.get("/api/get_complexQ2",  async function(req,res) {
 
 
 
-  app.get("/api/get_complexQ3",  async function(req,res) {
+  app.get("/api/get_complexQ4",  async function(req,res) {
     const result = await executeQuery(`SELECT 
                                         EXTRACT(YEAR FROM DATE_OCC) AS Year,
                                         CASE 
@@ -117,7 +117,7 @@ app.get("/api/get_complexQ2",  async function(req,res) {
     res.send(result)
     })
 
-    app.get("/api/get_complexQ4",  async function(req,res) {
+    app.get("/api/get_complexQ5",  async function(req,res) {
       const result = await executeQuery(`WITH YearlyWeaponCount AS (
                                                       SELECT 
                                                           EXTRACT(YEAR FROM DATE_OCC) AS Year,
