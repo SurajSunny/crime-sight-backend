@@ -194,3 +194,10 @@ app.get("/api/get_areas",  async function(req,res) {
   res.send(result)
   
   })
+
+  app.get("/api/get_weapons",  async function(req,res) {
+    const result = await executeQuery(`SELECT * FROM Weapon`)
+    
+    res.send(result)
+    
+    })
