@@ -195,16 +195,26 @@ app.get("/api/get_areas",  async function(req,res) {
   
   })
 
-  app.get("/api/get_weapons",  async function(req,res) {
-    const result = await executeQuery(`SELECT * FROM Weapon`)
+app.get("/api/get_weapons",  async function(req,res) {
+const result = await executeQuery(`SELECT * FROM Weapon`)
+
+res.send(result)
+
+})
+
+app.get("/api/get_recordCount",  async function(req,res) {
+    const result = await executeQuery(`SELECT Count(*) from crime_report`)
     
     res.send(result)
     
     })
+app.get("/api/get_recordEachYear",  async function(req,res) {
+const result = await executeQuery(`SELECT EXTRACT(YEAR FROM DATE_OCC) AS Year, COUNT(*) AS Total_Crimes
+FROM Crime_report
+GROUP BY EXTRACT(YEAR FROM DATE_OCC)
+ORDER BY Year
+`)
 
-    app.get("/api/get_recordCount",  async function(req,res) {
-      const result = await executeQuery(`SELECT Count(*) from crime_report`)
-      
-      res.send(result)
-      
-      })
+res.send(result)
+
+})
