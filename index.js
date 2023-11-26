@@ -203,7 +203,7 @@ app.get("/api/get_areas",  async function(req,res) {
     })
 
     app.get("/api/get_recordCount",  async function(req,res) {
-      const result = await executeQuery(`SELECT Count(*) from crime_report`)
+      const result = await executeQuery(`SELECT Count(*) AS TotalCount from crime_report`)
       
       res.send(result)
       
