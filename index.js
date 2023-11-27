@@ -213,9 +213,30 @@ ORDER BY Year
 res.send(result)
 
 })
-    app.get("/api/get_recordCount",  async function(req,res) {
-      const result = await executeQuery(`SELECT Count(*) AS TotalCount from crime_report`)
-      
-      res.send(result)
-      
-      })
+app.get("/api/get_recordCount",  async function(req,res) {
+const result = await executeQuery(`SELECT Count(*) AS TotalCount from crime_report`)
+
+res.send(result)
+
+})
+app.get("/api/get_areaCount",  async function(req,res) {
+const result = await executeQuery(`SELECT AREA_CODE, COUNT(*) AS Total_Crimes
+FROM Crime_report
+GROUP BY AREA_CODE
+ORDER BY Total_Crimes DESC
+`)
+
+res.send(result)
+
+})
+app.get("/api/get_weaponCount",  async function(req,res) {
+    const result = await executeQuery(`SELECT WEAPON_USED_CODE, COUNT(*) AS Total_Crimes
+                                            FROM Crime_report
+                                            GROUP BY WEAPON_USED_CODE
+                                            ORDER BY Total_Crimes DESC
+                                            
+                                            `)
+    
+    res.send(result)
+    
+    })
