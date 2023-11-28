@@ -11,23 +11,23 @@ app.use(bodyParser.json())
 app.use(cors())
 
 
-const server = app.listen(process.env.PORT , function(){
-  const port = server.address().port;
-  console.log("Listening on PORT NUMBER", port);
+const server = app.listen(process.env.PORT, function () {
+    const port = server.address().port;
+    console.log("Listening on PORT NUMBER", port);
 })
 
 
-app.post("/api/test",  async function(req,res) {
-  const age = req.body;
-const result = await executeQuery('SELECT * FROM crime_report')
+app.post("/api/test", async function (req, res) {
+    const age = req.body;
+    const result = await executeQuery('SELECT * FROM crime_report')
 
-res.send(result)
+    res.send(result)
 
 })
 
 // get's the complexQuery1 with codes
-app.get("/api/get_complexQ1",  async function(req,res) {
-const result = await executeQuery(`SELECT Area.area_code,Area.area_name, EXTRACT(YEAR FROM crime_report.date_rprtd) AS year, 
+app.get("/api/get_complexQ1", async function (req, res) {
+    const result = await executeQuery(`SELECT Area.area_code,Area.area_name, EXTRACT(YEAR FROM crime_report.date_rprtd) AS year, 
                                       CASE  WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (12, 1, 2) THEN 'Winter' 
                                       WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (3, 4, 5) THEN 'Spring'
                                       WHEN EXTRACT(MONTH FROM crime_report.date_rprtd) IN (6, 7, 8) THEN 'Summer'
@@ -52,11 +52,45 @@ const result = await executeQuery(`SELECT Area.area_code,Area.area_name, EXTRACT
                                       EXTRACT(YEAR FROM crime_report.date_rprtd),
                                       season`)
 
-res.send(result)
+    res.send(result)
 })
 
-app.get("/api/get_complexQ3",  async function(req,res) {
-  const result = await executeQuery(`SELECT 
+// Complex Query 2 : How has the detection rate of theft-related crimes changed in specific districts over time?
+app.get("/api/get_complexQ2", async function (req, res) {
+    const result = await executeQuery(`SELECT 
+        area_code,
+        EXTRACT(YEAR FROM DATE_OCC) AS Year,
+        SUM(
+            CASE 
+                WHEN STATUS IN ( 'AA', 'AO', 'JA', 'JO') THEN 1 
+                ELSE 0 
+            END
+        ) AS Detected_Crimes,
+        COUNT(*) AS Total_Crimes,
+        Round((SUM(
+            CASE 
+                WHEN STATUS IN ( 'AA', 'AO', 'JA', 'JO') THEN 1 
+                ELSE 0 
+            END
+        ) / COUNT(*)) * 100,2) AS Detection_Rate_Percentage
+    FROM 
+        Crime_report
+    WHERE 
+        CRIME_CODE IN (SELECT DISTINCT(cr.crime_code) 
+                        FROM crime_report cr JOIN Crime_type ct ON cr.crime_code = ct.crime_code
+                        WHERE LOWER(ct.crime_descr) LIKE '%theft%'
+                        )
+    GROUP BY 
+        area_code, EXTRACT(YEAR FROM DATE_OCC)
+    ORDER BY 
+         area_code, EXTRACT(YEAR FROM DATE_OCC)
+                                                          `)
+
+    res.send(result)
+})
+
+app.get("/api/get_complexQ3", async function (req, res) {
+    const result = await executeQuery(`SELECT 
                                       FLOOR(TIME_OCC / 100) AS Incident_Hour, 
                                       AREA_CODE, 
                                       COUNT(*) AS Incident_Count
@@ -68,14 +102,14 @@ app.get("/api/get_complexQ3",  async function(req,res) {
                                     ORDER BY 
                                       AREA_CODE, 
                                       Incident_Count DESC`)
-                                      
-  res.send(result)
-  
-  })
+
+    res.send(result)
+
+})
 
 
 
-  app.get("/api/get_complexQ4",  async function(req,res) {
+app.get("/api/get_complexQ4", async function (req, res) {
     const result = await executeQuery(`SELECT 
                                         EXTRACT(YEAR FROM DATE_OCC) AS Year,
                                         CASE 
@@ -113,12 +147,12 @@ app.get("/api/get_complexQ3",  async function(req,res) {
                                         AREA_CODE
                                     ORDER BY 
                                         Year, Season, Age_Group, AREA_CODE`)
-                                        
-    res.send(result)
-    })
 
-    app.get("/api/get_complexQ5",  async function(req,res) {
-      const result = await executeQuery(`WITH YearlyWeaponCount AS (
+    res.send(result)
+})
+
+app.get("/api/get_complexQ5", async function (req, res) {
+    const result = await executeQuery(`WITH YearlyWeaponCount AS (
                                                       SELECT 
                                                           EXTRACT(YEAR FROM DATE_OCC) AS Year,
                                                           AREA_CODE,
@@ -149,94 +183,60 @@ app.get("/api/get_complexQ3",  async function(req,res) {
                                                       a.AREA_CODE, 
                                                       a.WEAPON_USED_CODE
                                                         `)
-      
-      res.send(result)
-      })
 
-      // Complex Query 2 : How has the detection rate of theft-related crimes changed in specific districts over time?
-      app.get("/api/get_complexQ2",  async function(req,res) {
-        const result = await executeQuery(`SELECT 
-        area_code,
-        EXTRACT(YEAR FROM DATE_OCC) AS Year,
-        SUM(
-            CASE 
-                WHEN STATUS IN ( 'AA', 'AO', 'JA', 'JO') THEN 1 
-                ELSE 0 
-            END
-        ) AS Detected_Crimes,
-        COUNT(*) AS Total_Crimes,
-        Round((SUM(
-            CASE 
-                WHEN STATUS IN ( 'AA', 'AO', 'JA', 'JO') THEN 1 
-                ELSE 0 
-            END
-        ) / COUNT(*)) * 100,2) AS Detection_Rate_Percentage
-    FROM 
-        Crime_report
-    WHERE 
-        CRIME_CODE IN (SELECT DISTINCT(cr.crime_code) 
-                        FROM crime_report cr JOIN Crime_type ct ON cr.crime_code = ct.crime_code
-                        WHERE LOWER(ct.crime_descr) LIKE '%theft%'
-                        )
-    GROUP BY 
-        area_code, EXTRACT(YEAR FROM DATE_OCC)
-    ORDER BY 
-         area_code, EXTRACT(YEAR FROM DATE_OCC)
-                                                          `)
-        
-        res.send(result)
-        })
-  
+    res.send(result)
+})
 
-app.get("/api/get_areas",  async function(req,res) {
-  const result = await executeQuery(`SELECT * FROM Area`)
-  
-  res.send(result)
-  
-  })
 
-app.get("/api/get_weapons",  async function(req,res) {
-const result = await executeQuery(`SELECT * FROM Weapon`)
+app.get("/api/get_areas", async function (req, res) {
+    const result = await executeQuery(`SELECT * FROM Area`)
 
-res.send(result)
+    res.send(result)
+
+})
+
+app.get("/api/get_weapons", async function (req, res) {
+    const result = await executeQuery(`SELECT * FROM Weapon`)
+
+    res.send(result)
 
 })
 
 
-app.get("/api/get_recordEachYear",  async function(req,res) {
-const result = await executeQuery(`SELECT EXTRACT(YEAR FROM DATE_OCC) AS Year, COUNT(*) AS Total_Crimes
+app.get("/api/get_recordEachYear", async function (req, res) {
+    const result = await executeQuery(`SELECT EXTRACT(YEAR FROM DATE_OCC) AS Year, COUNT(*) AS Total_Crimes
 FROM Crime_report
 GROUP BY EXTRACT(YEAR FROM DATE_OCC)
 ORDER BY Year
 `)
 
-res.send(result)
+    res.send(result)
 
 })
-app.get("/api/get_recordCount",  async function(req,res) {
-const result = await executeQuery(`SELECT Count(*) AS TotalCount from crime_report`)
+app.get("/api/get_recordCount", async function (req, res) {
+    const result = await executeQuery(`SELECT Count(*) AS TotalCount from crime_report`)
 
-res.send(result)
+    res.send(result)
 
 })
-app.get("/api/get_areaCount",  async function(req,res) {
-const result = await executeQuery(`SELECT AREA_CODE, COUNT(*) AS Total_Crimes
+app.get("/api/get_areaCount", async function (req, res) {
+    const result = await executeQuery(`SELECT AREA_CODE, COUNT(*) AS Total_Crimes
 FROM Crime_report
 GROUP BY AREA_CODE
 ORDER BY Total_Crimes DESC
 `)
 
-res.send(result)
+    res.send(result)
 
 })
-app.get("/api/get_weaponCount",  async function(req,res) {
+app.get("/api/get_weaponCount", async function (req, res) {
     const result = await executeQuery(`SELECT WEAPON_USED_CODE, COUNT(*) AS Total_Crimes
                                             FROM Crime_report
                                             GROUP BY WEAPON_USED_CODE
                                             ORDER BY Total_Crimes DESC
                                             
                                             `)
-    
+
     res.send(result)
-    
-    })
+
+})
