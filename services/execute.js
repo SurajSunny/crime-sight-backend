@@ -3,6 +3,7 @@ const oracledb = require('oracledb');
 const config = require('../config')
 let connection;
 async function query(sql, params) {
+    let connection;
     try {
         let header = []
        
